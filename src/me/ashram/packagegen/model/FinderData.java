@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Created by ashram on 21.12.2015.
  */
-public class BearingFinderData {
+public class FinderData {
     private volatile int delimiter = 0;
     private volatile int size = 0;
     private volatile int directionFinderAddress = 0;
@@ -16,14 +16,14 @@ public class BearingFinderData {
     private Map<BeaconId, Integer> rssiValues;
 
 
-    public BearingFinderData() {
+    public FinderData() {
         rssiValues = new HashMap<>();
         for (BeaconId id : BeaconId.values()) {
             rssiValues.put(id, 0);
         }
     }
 
-    public BearingFinderData(int delimiter, int size, int pauseInMillis) {
+    public FinderData(int delimiter, int size, int pauseInMillis) {
         this();
         this.delimiter = delimiter;
         this.size = size;

@@ -10,7 +10,7 @@ import javafx.scene.control.*;
 import javafx.event.ActionEvent;
 import javafx.scene.input.MouseEvent;
 import jssc.SerialPortException;
-import me.ashram.packagegen.model.BearingFinderData;
+import me.ashram.packagegen.model.FinderData;
 import me.ashram.packagegen.controller.communicator.PortSettings;
 import me.ashram.packagegen.controller.communicator.SerialCommunicator;
 
@@ -57,7 +57,7 @@ public class PackageGeneratorController {
     @FXML private ToggleButton startTransmissionButton;
 
     private SerialCommunicator communicator;
-    private BearingFinderData bearingFinderData = new BearingFinderData();
+    private FinderData finderData = new FinderData();
 
 
     public void initialize() {
@@ -78,7 +78,7 @@ public class PackageGeneratorController {
         frequencySlider.valueChangingProperty().addListener((observable, oldValue, newValue) -> {
             String value =  String.valueOf((int) frequencySlider.getValue());
             frequencyValueTextField.textProperty().setValue(value);
-            bearingFinderData.setPauseInMillis(getPauseInMillis());
+            finderData.setPauseInMillis(getPauseInMillis());
         });
 
         ObservableList<String> baudValuesList = FXCollections.observableArrayList("300", "600", "1200", "2400", "4800",
@@ -112,11 +112,11 @@ public class PackageGeneratorController {
             portValueComboBox.setItems(FXCollections.observableArrayList(communicator.getAvailablePorts()));
         });
 
-        bearingFinderData.setDelimiter(Byte.parseByte(delimiterTextField.getText(), 16));
-        bearingFinderData.setSize(Byte.parseByte(sizeTextField.getText(), 16));
-        bearingFinderData.setPauseInMillis(getPauseInMillis());
-        bearingFinderData.setDirectionFinderAddress(10);
-        communicator = new SerialCommunicator(bearingFinderData);
+        finderData.setDelimiter(Byte.parseByte(delimiterTextField.getText(), 16));
+        finderData.setSize(Byte.parseByte(sizeTextField.getText(), 16));
+        finderData.setPauseInMillis(getPauseInMillis());
+        finderData.setDirectionFinderAddress(10);
+        communicator = new SerialCommunicator(finderData);
 
         portValueComboBox.setItems(FXCollections.observableArrayList(communicator.getAvailablePorts()));
         portValueComboBox.getSelectionModel().selectLast();
@@ -124,7 +124,7 @@ public class PackageGeneratorController {
         delimiterTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             try {
                 int newDelimiter = Integer.parseInt(newValue, 16);
-                bearingFinderData.setDelimiter(newDelimiter);
+                finderData.setDelimiter(newDelimiter);
             } catch (NumberFormatException|ClassCastException exception) {
                 System.out.println("Exception occurred with delimiter value");
                 logString("Invalid delimiter: " + exception.getMessage());
@@ -134,7 +134,7 @@ public class PackageGeneratorController {
         sizeTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             try {
                 int newSize = Integer.parseInt(newValue, 16);
-                bearingFinderData.setSize(newSize);
+                finderData.setSize(newSize);
             } catch (NumberFormatException|ClassCastException exception) {
                 System.out.println("Exception occurred with size value");
                 logString("Invalid size: " + exception.getMessage());
@@ -144,7 +144,7 @@ public class PackageGeneratorController {
         bearingTextField.textProperty().addListener(((observable, oldValue, newValue) -> {
             try {
                 int directionFinderAddress = Integer.parseInt(newValue, 16);
-                bearingFinderData.setDirectionFinderAddress(directionFinderAddress);
+                finderData.setDirectionFinderAddress(directionFinderAddress);
             } catch (NumberFormatException|ClassCastException exception){
                 System.out.println("Exception occurred with device address value");
                 logString("Invalid value: " + exception.getMessage());
@@ -264,7 +264,7 @@ public class PackageGeneratorController {
             String value =  Integer.toHexString((int) slider.getValue()).toUpperCase();
             textField.textProperty().setValue("0x" + value);
             String sliderId = slider.getId();
-            bearingFinderData.setRssiByBeaconId(BearingFinderData.BeaconId.fromSting(sliderId.substring(sliderId.length()-2)),
+            finderData.setRssiByBeaconId(FinderData.BeaconId.fromSting(sliderId.substring(sliderId.length()-2)),
                     (int) slider.getValue());
         }
     }

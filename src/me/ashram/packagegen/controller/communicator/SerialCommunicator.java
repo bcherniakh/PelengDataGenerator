@@ -3,7 +3,7 @@ package me.ashram.packagegen.controller.communicator;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
-import me.ashram.packagegen.model.BearingFinderData;
+import me.ashram.packagegen.model.FinderData;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,12 +18,12 @@ public class SerialCommunicator {
     private boolean connectionEstablished = false;
     private boolean transmissionOnLine = false;
     private SerialPort port;
-    private BearingFinderData dataSource;
+    private FinderData dataSource;
     private TransmissionRunnable currentTaskRunnable;
     private Thread currentTransmissionThread;
 
 
-    public SerialCommunicator(BearingFinderData holder) {
+    public SerialCommunicator(FinderData holder) {
         this.dataSource = holder;
     }
 
@@ -36,25 +36,47 @@ public class SerialCommunicator {
         int parityDriverCode = getParityDriverCode(settings.getParity());
 
         port = new SerialPort(portName);
-        port.openPort();
+        result = port.openPort();
         port.setParams(baudRateDriverCode, dataBitsDriverCode, stopBitsDriverCode, parityDriverCode);
         connectionEstablished = true;
         return result;
     }
 
     public void startTransmission() {
-        transmissionOnLine = true;
         currentTaskRunnable = new TransmissionRunnable();
         currentTransmissionThread = new Thread(currentTaskRunnable);
         currentTransmissionThread.start();
+        transmissionOnLine = true;
     }
 
     public void stopTransmission() {
-        transmissionOnLine = false;
-        if (currentTransmissionThread != null) {
+        if ((currentTransmissionThread != null)
+                && currentTransmissionThread.isAlive()) {
             currentTransmissionThread.interrupt();
             currentTransmissionThread = null;
         }
+        transmissionOnLine = false;
+    }
+
+    public boolean brokeConnection() throws SerialPortException {
+        boolean result = false;
+        stopTransmission();
+        connectionEstablished = false;
+        result = port.closePort();
+        return result;
+    }
+
+    public List<String> getAvailablePorts() {
+        availablePortNames = Arrays.asList(SerialPortList.getPortNames());
+        return Collections.unmodifiableList(availablePortNames);
+    }
+
+    public boolean isConnectionEstablished() {
+        return connectionEstablished;
+    }
+
+    public boolean isTransmissionOnLine() {
+        return transmissionOnLine;
     }
 
     private int getParityDriverCode(PortSettings.Parity parity) {
@@ -162,39 +184,18 @@ public class SerialCommunicator {
         return baudRateDriverCode;
     }
 
-    public boolean brokeConnection() throws SerialPortException {
-        boolean result = false;
-        stopTransmission();
-        connectionEstablished = false;
-        port.closePort();
-        return result;
-    }
-
-    public List<String> getAvailablePorts() {
-        availablePortNames = Arrays.asList(SerialPortList.getPortNames());
-        return Collections.unmodifiableList(availablePortNames);
-    }
-
-    public boolean isConnectionEstablished() {
-        return connectionEstablished;
-    }
-
-    public boolean isTransmissionOnLine() {
-        return transmissionOnLine;
-    }
-
     private class TransmissionRunnable implements Runnable {
         boolean stopTask = false;
 
         @Override
         public void run() {
-            Set<BearingFinderData.BeaconId> beaconIds = dataSource.getBeaconIds();
+            Set<FinderData.BeaconId> beaconIds = dataSource.getBeaconIds();
             outerLoop:
             while (!stopTask) {
                 if(Thread.currentThread().isInterrupted()) {
                     stopTask();
                 }
-                for (BearingFinderData.BeaconId id : beaconIds) {
+                for (FinderData.BeaconId id : beaconIds) {
                     try {
                         if (stopTask) break outerLoop;
                         if (Thread.currentThread().isInterrupted()) {
@@ -217,7 +218,6 @@ public class SerialCommunicator {
                 Thread.sleep(dataSource.getPauseInMillis());
             } catch (InterruptedException e) {
                 stopTask = true;
-                System.out.println("Stopping task");
             }
         }
 
