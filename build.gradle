@@ -1,0 +1,36 @@
+apply plugin: 'java'
+
+apply plugin: 'application'
+
+repositories {
+    jcenter()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'me.ashram.packagegen.Main'
+    }
+}
+
+dependencies {
+    compile group: 'org.scream3r', name: 'jssc', version: '2.8.0'
+    testCompile 'junit:junit:4.12'
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'me.ashram.packagegen.Main'
+    }
+
+    baseName = "${project.name}-all"
+    destinationDir = getRootDir()
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
+
+// Define the main class for the application
+mainClassName = 'me.ashram.packagegen.Main'
+
